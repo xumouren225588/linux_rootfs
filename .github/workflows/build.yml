@@ -1,0 +1,39 @@
+name: Build Ubuntu Rootfs Img
+
+on:
+  workflow_dispatch:
+    inputs:
+      ubuntu_version:
+        description: 'Ubuntu version (noble or jammy)'
+        required: true
+        default: 'noble'
+        options:
+          - noble
+          - jammy
+      packages:
+        description: 'Custom packages to install (comma-separated)'
+        required: false
+        default: ''
+      image_size_mb:
+        description: 'Image size in MB'
+        required: true
+        default: '1024'
+
+jobs:
+  build-rootfs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap kpartx qemu-user-static binfmt-support
+
+      - name: Create base rootfs
+        run: |
+          sudo debootstrap --arch=amd64 ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
+
+      - name: Customize rootfs
+        if: github.event.in
