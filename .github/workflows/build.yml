@@ -36,4 +36,34 @@ jobs:
           sudo debootstrap --arch=amd64 ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
 
       - name: Customize rootfs
-        if: github.event.in
+        if: github.event.inputs.packages != ''
+        run: |
+          sudo cp /etc/resolv.conf rootfs/etc/resolv.conf
+          sudo chroot rootfs /bin/bash -c "apt-get update && apt-get install -y ${{ github.event.inputs.packages }}"
+
+      - name: Create ext4 image
+        run: |
+          IMAGE_SIZE=${{ github.event.inputs.image_size_mb }}M
+          sudo dd if=/dev/zero of=rootfs.img bs=1M count=${{ github.event.inputs.image_size_mb }}
+          sudo mkfs.ext4 -F rootfs.img
+          sudo mkdir -p /mnt/rootfs
+          sudo mount rootfs.img /mnt/rootfs
+          sudo cp -a rootfs/. /mnt/rootfs/
+          sudo umount /mnt/rootfs
+
+      - name: Split image into 1GB parts
+        run: |
+          sudo split -b 1G rootfs.img rootfs_part_
+
+      - name: Create and upload release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}_rootfs_img
+          target_commitish: ${{ github.sha }}
+          files: rootfs_part_*
+          name: ${{ github.run_number }}_rootfs_img
+          body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
+          draft: false
+          prerelease: false
