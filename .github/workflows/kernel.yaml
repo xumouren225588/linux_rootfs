@@ -31,3 +31,15 @@ jobs:
           path: |
             /boot/vmlinuz-*
             /boot/initrd.img-*
+      # - name: Create and upload release
+      #   uses: softprops/action-gh-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.run_number }}_kernel
+      #     target_commitish: ${{ github.sha }}
+      #     files: rootfs_part_*
+      #     name: ${{ github.run_number }}_rootfs_img
+      #     body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
+      #     draft: false
+      #     prerelease: false
