@@ -11,6 +11,14 @@ on:
         options:
           - noble
           - jammy
+      jg:
+        description: '架构：'
+        required: true
+        default: 'noble'
+        type: choice
+        options:
+          - amd64
+          - i386
       packages:
         description: 'Custom packages to install (comma-separated)'
         required: false
@@ -19,7 +27,9 @@ on:
         description: 'Image size in MB'
         required: true
         default: '1024'
-
+      password:
+        description: 'root密码（仅限首次登录使用）'
+        required: true
 jobs:
   build-rootfs:
     runs-on: ubuntu-latest
@@ -41,14 +51,14 @@ jobs:
 
       - name: Create base rootfs
         run: |
-          sudo debootstrap --arch=amd64 ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
-
+          sudo debootstrap --arch=${{ github.event.inputs.jg }} ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
+          sudo chroot rootfs /bin/bash -c "echo -e '${{ github.event.inputs.password }}\n${{ github.event.inputs.password }}' | passwd root"
       - name: Customize rootfs
         if: github.event.inputs.packages != ''
         run: |
           sudo cp /etc/resolv.conf rootfs/etc/resolv.conf
           sudo chroot rootfs /bin/bash -c "apt-get update && apt-get install -y ${{ github.event.inputs.packages }}"
-
+          
       - name: Create ext4 image
         run: |
           IMAGE_SIZE=${{ github.event.inputs.image_size_mb }}M

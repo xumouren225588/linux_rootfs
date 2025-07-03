@@ -1,0 +1,21 @@
+name: Build vmlinuz & initrd
+on: 
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps: 
+      - name: Create and upload release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}_rootfs_img
+          target_commitish: ${{ github.sha }}
+          files: |
+            /boot/vmlinuz-*
+            /boot/initrd.img-*
+          name: ${{ github.run_number }}_rootfs_img
+          body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
+          draft: false
+          prerelease: false
