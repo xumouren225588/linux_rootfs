@@ -3,43 +3,19 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout kernel source
-        uses: actions/checkout@v4
+    runs-on: ubuntu-24.04
+    steps: 
+      - name: Create and upload release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repository: torvalds/linux
-          path: linux
-
-      - name: Install build deps
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential flex bison libssl-dev libelf-dev bc
-
-      - name: Configure & build
-        working-directory: linux
-        run: |
-          make defconfig
-          make -j$(nproc) bzImage modules
-          sudo make modules_install
-          sudo make install
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-artifacts
-          path: |
+          tag_name: ${{ github.run_number }}_rootfs_img
+          target_commitish: ${{ github.sha }}
+          files: |
             /boot/vmlinuz-*
             /boot/initrd.img-*
-      # - name: Create and upload release
-      #   uses: softprops/action-gh-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ github.run_number }}_kernel
-      #     target_commitish: ${{ github.sha }}
-      #     files: rootfs_part_*
-      #     name: ${{ github.run_number }}_rootfs_img
-      #     body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
-      #     draft: false
-      #     prerelease: false
+          name: ${{ github.run_number }}_rootfs_img
+          body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
+          draft: false
+          prerelease: false
