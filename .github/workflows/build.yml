@@ -52,13 +52,13 @@ jobs:
       - name: Create base rootfs
         run: |
           sudo debootstrap --arch=${{ github.event.inputs.jg }} ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
-
+          sudo chroot rootfs /bin/bash -c "echo '${{ github.event.inputs.password }}' | passwd root --stdin"
       - name: Customize rootfs
         if: github.event.inputs.packages != ''
         run: |
           sudo cp /etc/resolv.conf rootfs/etc/resolv.conf
           sudo chroot rootfs /bin/bash -c "apt-get update && apt-get install -y ${{ github.event.inputs.packages }}"
-          sudo chroot rootfs /bin/bash -c "echo '${{ github.event.inputs.password }}' | passwd root --stdin"
+          
       - name: Create ext4 image
         run: |
           IMAGE_SIZE=${{ github.event.inputs.image_size_mb }}M
