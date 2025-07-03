@@ -52,7 +52,7 @@ jobs:
       - name: Create base rootfs
         run: |
           sudo debootstrap --arch=${{ github.event.inputs.jg }} ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
-          sudo chroot rootfs /bin/bash -c "echo -c '${{ github.event.inputs.password }}\n${{ github.event.inputs.password }}' | passwd root"
+          sudo chroot rootfs /bin/bash -c "echo -c '${{ github.event.inputs.password }}\n${{ github.event.inputs.password }}\n' | passwd root"
       - name: Customize rootfs
         if: github.event.inputs.packages != ''
         run: |
