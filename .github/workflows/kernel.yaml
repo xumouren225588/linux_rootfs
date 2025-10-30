@@ -10,3 +10,24 @@ jobs:
     steps: 
       - name: 获取内核源代码
         run: git clone --depth 1 --branch ${{ github.event.inputs.kernel }} https://github.com/torvalds/linux.git .
+      - name: 请使用下面所显示的命令连接服务器
+        uses: csexton/debugger-action@master
+      - name: 编译linux
+        run: make -j$(nproc)
+      - name: Find Kernel Image
+        id: find_kernel_image
+        run: |
+          # 查找内核文件
+          KERNEL_IMAGE=$(find arch/ -type f \( -name "bzImage" -o -name "zImage" -o -name "Image.gz" \) | head -n 1)
+          if [ -z "$KERNEL_IMAGE" ]; then
+            echo "Error: No kernel image found!" >&2
+            exit 1
+          fi
+          echo "Found kernel image at: $KERNEL_IMAGE"
+          echo "KERNEL_IMAGE=$KERNEL_IMAGE" >> $GITHUB_ENV
+
+      - name: Upload Kernel Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kernel-artifact
+          path: ${{ env.KERNEL_IMAGE }}
