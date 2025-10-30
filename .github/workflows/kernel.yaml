@@ -27,7 +27,7 @@ jobs:
           echo "KERNEL_IMAGE=$KERNEL_IMAGE" >> $GITHUB_ENV
 
       - name: Upload Kernel Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kernel-artifact
           path: ${{ env.KERNEL_IMAGE }}
