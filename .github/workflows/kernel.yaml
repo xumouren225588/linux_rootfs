@@ -8,6 +8,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps: 
+      - name: 安装依赖
+        run: sudo apt-get update && sudo apt-get install -y build-essential gcc make flex bison bc openssl libssl-dev pkg-config libncurses5-dev libncursesw5-dev util-linux kmod e2fsprogs quota iptables jfsutils xfsprogs btrfs-progs squashfs-tools python3-dev perl dwarves libelf-dev
       - name: 获取内核源代码
         run: git clone --depth 1 --branch ${{ github.event.inputs.kernel }} https://github.com/torvalds/linux.git .
       - name: 请使用下面所显示的命令连接服务器
