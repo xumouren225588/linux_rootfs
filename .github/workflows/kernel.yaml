@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-24.04
     steps: 
       - name: 获取内核源代码
-        run: git clone --depth --branch ${{ github.event.inputs.kernel }} https://github.com/torvalds/linux.git .
+        run: git clone --depth 1 --branch ${{ github.event.inputs.kernel }} https://github.com/torvalds/linux.git .
