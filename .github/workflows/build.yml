@@ -34,12 +34,12 @@ jobs:
   build-rootfs:
     runs-on: ubuntu-latest
     steps:
-#      - name: Free Disk Space (Ubuntu)
-#        uses: jlumbroso/free-disk-space@main
-#        with:
-#          # this might remove tools that are actually needed,
-#          # if set to "true" but frees about 6 GB
-#          tool-cache: false
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -48,7 +48,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y debootstrap kpartx qemu-user-static binfmt-support
-
       - name: Create base rootfs
         run: |
           sudo debootstrap --arch=${{ github.event.inputs.jg }} ${{ github.event.inputs.ubuntu_version }} rootfs http://archive.ubuntu.com/ubuntu/
@@ -59,7 +58,7 @@ jobs:
           sudo cp /etc/resolv.conf rootfs/etc/resolv.conf
           sudo chroot rootfs /bin/bash -c "apt-get update && apt-get install -y ${{ github.event.inputs.packages }}"
           
-      - name: Create and upload ext4 image
+      - name: Create ext4 image
         run: |
           IMAGE_SIZE=${{ github.event.inputs.image_size_mb }}M
           sudo dd if=/dev/zero of=rootfs.img bs=1M count=${{ github.event.inputs.image_size_mb }}
@@ -68,8 +67,18 @@ jobs:
           sudo mount rootfs.img /mnt/rootfs
           sudo cp -a rootfs/. /mnt/rootfs/
           sudo umount /mnt/rootfs
-          sudo rm -rf rootfs 
-          zip rootfs.zip rootfs.img
-          rm -f rootfs.img
-          curl -F file=@./rootfs.zip https://0x0.st/rootfs.zip
-      
+      - name: Split image into 1GB parts
+        run: |
+          sudo split -b 1G rootfs.img rootfs_part_
+      - name: Create and upload release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}_rootfs_img
+          target_commitish: ${{ github.sha }}
+          files: rootfs_part_*
+          name: ${{ github.run_number }}_rootfs_img
+          body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
+          draft: false
+          prerelease: false
