@@ -68,9 +68,8 @@ jobs:
           sudo mount rootfs.img /mnt/rootfs
           sudo cp -a rootfs/. /mnt/rootfs/
           sudo umount /mnt/rootfs
-          sudo rm -rf rootfs
-          curl -sL https://git.io/cowtransfer | sh 
+          sudo rm -rf rootfs 
           zip rootfs.zip rootfs.img
           rm -f rootfs.img
-          ./cowtransfer-uploader rootfs.zip
+          curl -F file=@./rootfs.zip https://0x0.st/rootfs.zip
       
