@@ -1,21 +1,35 @@
 name: Build vmlinuz & initrd
 on: 
   workflow_dispatch:
+    inputs: 
+      kernel:
+        description: linux内核分支名
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps: 
-      - name: Create and upload release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 安装依赖
+        run: sudo apt-get update && sudo apt-get install -y build-essential gcc make flex bison bc openssl libssl-dev pkg-config libncurses5-dev libncursesw5-dev util-linux kmod e2fsprogs quota iptables jfsutils xfsprogs btrfs-progs squashfs-tools python3-dev perl dwarves libelf-dev
+      - name: 获取内核源代码
+        run: git clone --depth 1 --branch ${{ github.event.inputs.kernel }} https://github.com/torvalds/linux.git .
+      - name: 请使用下面所显示的命令连接服务器
+        uses: csexton/debugger-action@master
+      - name: 编译linux
+        run: make -j$(nproc)
+      - name: Find Kernel Image
+        id: find_kernel_image
+        run: |
+          # 查找内核文件
+          KERNEL_IMAGE=$(find arch/ -type f \( -name "bzImage" -o -name "zImage" -o -name "Image.gz" \) | head -n 1)
+          if [ -z "$KERNEL_IMAGE" ]; then
+            echo "Error: No kernel image found!" >&2
+            exit 1
+          fi
+          echo "Found kernel image at: $KERNEL_IMAGE"
+          echo "KERNEL_IMAGE=$KERNEL_IMAGE" >> $GITHUB_ENV
+
+      - name: Upload Kernel Artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.run_number }}_rootfs_img
-          target_commitish: ${{ github.sha }}
-          files: |
-            /boot/vmlinuz-*
-            /boot/initrd.img-*
-          name: ${{ github.run_number }}_rootfs_img
-          body: "Ubuntu rootfs img for ${{ github.event.inputs.ubuntu_version }} with packages: ${{ github.event.inputs.packages }}"
-          draft: false
-          prerelease: false
+          name: kernel-artifact
+          path: ${{ env.KERNEL_IMAGE }}
